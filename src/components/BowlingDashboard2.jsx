@@ -58,7 +58,7 @@ const PlayerSetup = ({ players, addPlayer, startGame, newPlayerName, setNewPlaye
 const Frame = ({ frame, frameIndex, playerIndex, handleSelectCell, isCellClickable, getCellStyle }) => (
   <div className={`flex flex-col border border-blue-600 rounded ${frameIndex === 9 ? 'col-span-2' : ''}`}>
     <div className="text-center border-b border-blue-600 py-1 bg-blue-800 rounded-t">{frameIndex + 1}</div>
-    <div className="flex">
+    <div className="flex select-none">
       {frame.map((roll, rollIndex) => (
         <motion.div
           key={rollIndex}
@@ -458,7 +458,7 @@ const BowlingDashboard = () => {
   console.log(sortedPlayers)
 
   return (
-    <div className="p-6 text-white font-bold min-h-screen bg-gradient-to-br from-blue-900 to-blue-700">
+    <div className="p-6 text-white font-bold min-h-screen">
       <AnimatePresence>
         {!gameStarted ? (
           <PlayerSetup
@@ -510,8 +510,8 @@ const BowlingDashboard = () => {
 
             <div className="flex justify-between mt-6">
               <div className="flex items-center flex-row">
+              {winnerIndex !== null && isGameOver && (
                 <div className="text-2xl border border-blue-300 rounded-md px-2 py-1">
-                  {winnerIndex !== null && isGameOver && (
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -519,8 +519,8 @@ const BowlingDashboard = () => {
                       <p>Ganador: {sortedPlayers[0].name}</p>
                       <Confetti width={width} height={height}/>
                     </motion.div>
-                  )}
                 </div>
+                )}
               </div>
             </div>
           </motion.div>
