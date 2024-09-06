@@ -102,7 +102,7 @@ const Scoreboard = ({ players, handleSelectCell, isCellClickable, getCellStyle }
 const Leaderboard = ({ sortedPlayers }) => (
   <div className="w-full lg:w-1/4 mt-6 lg:mt-0">
     <div className="bg-gradient-to-br from-blue-900 to-blue-700 p-4 rounded-lg shadow-lg">
-      <h3 className="text-2xl mb-4 font-bold text-center">Leaderboard</h3>
+      <h3 className="text-2xl mb-4 font-bold text-center">Marcador</h3>
       {sortedPlayers.map((player, index) => (
         <motion.div
           key={index}
@@ -455,7 +455,7 @@ const BowlingDashboard = () => {
     setIsGameOver(false);
   };
   const sortedPlayers = [...players].sort((a, b) => b.totalScore - a.totalScore);
-
+  console.log(sortedPlayers)
 
   return (
     <div className="p-6 text-white font-bold min-h-screen bg-gradient-to-br from-blue-900 to-blue-700">
@@ -483,7 +483,7 @@ const BowlingDashboard = () => {
                 className="bg-blue-600 hover:bg-blue-700 transition-colors px-4 py-2 rounded-md flex items-center"
               >
                 <ArrowLeft size={24} className="mr-2" />
-                Return
+                Volver
               </motion.button>
             </div>
             
@@ -510,13 +510,13 @@ const BowlingDashboard = () => {
 
             <div className="flex justify-between mt-6">
               <div className="flex items-center flex-row">
-                <div className="text-2xl">
+                <div className="text-2xl border border-blue-300 rounded-md px-2 py-1">
                   {winnerIndex !== null && isGameOver && (
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                     >
-                      <p>Winner: {players[winnerIndex].name}</p>
+                      <p>Ganador: {sortedPlayers[0].name}</p>
                       <Confetti width={width} height={height}/>
                     </motion.div>
                   )}
@@ -538,7 +538,7 @@ const BowlingDashboard = () => {
             onClick={resetGame}
             className="bg-green-600 hover:bg-green-700 transition-colors px-6 py-3 rounded-md text-lg font-semibold"
           >
-            Reset Game
+            Reiniciar
           </motion.button>
         </motion.div>
       )}
