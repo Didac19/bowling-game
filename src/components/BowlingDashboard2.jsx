@@ -11,17 +11,17 @@ const PlayerSetup = ({ players, addPlayer, startGame, newPlayerName, setNewPlaye
     exit={{ opacity: 0, y: -20 }}
     className="w-full max-w-md mx-auto"
   >
-    <div className="bg-gradient-to-br from-blue-900 to-blue-700 p-6 rounded-lg shadow-lg">
-      <h2 className="text-3xl mb-6 text-center font-bold text-white">Add Players</h2>
+    <div className="bg-blue-900 p-6 rounded-lg shadow-lg border-2 border-blue-400">
+      <h2 className="text-3xl mb-6 text-center font-bold text-blue-300">Add Players</h2>
       <div className="mb-4 flex">
         <input
           type="text"
           value={newPlayerName}
           onChange={(e) => setNewPlayerName(e.target.value)}
-          className="flex-grow text-black p-2 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-grow text-blue-900 p-2 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Enter player name"
         />
-        <button onClick={addPlayer} className="bg-green-600 hover:bg-green-700 transition-colors px-4 py-2 rounded-r-md flex items-center">
+        <button onClick={addPlayer} className="bg-blue-500 hover:bg-blue-600 transition-colors px-4 py-2 rounded-r-md flex items-center">
           <UserPlus size={20} className="mr-2" />
           Add
         </button>
@@ -33,7 +33,7 @@ const PlayerSetup = ({ players, addPlayer, startGame, newPlayerName, setNewPlaye
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            className='bg-blue-800 px-4 py-2 text-xl rounded-md shadow'
+            className='bg-blue-800 px-4 py-2 text-xl rounded-md shadow text-blue-300'
           >
             <li>{player.name}</li>
           </motion.div>
@@ -41,7 +41,7 @@ const PlayerSetup = ({ players, addPlayer, startGame, newPlayerName, setNewPlaye
       </ul>
       <button 
         onClick={startGame} 
-        className="w-full bg-green-600 hover:bg-green-700 transition-colors px-4 py-3 rounded-md text-lg font-semibold flex items-center justify-center"
+        className="w-full bg-blue-500 hover:bg-blue-600 transition-colors px-4 py-3 rounded-md text-lg font-semibold flex items-center justify-center text-white"
         disabled={players.length === 0}
       >
         <Play size={24} className="mr-2" />
@@ -52,8 +52,7 @@ const PlayerSetup = ({ players, addPlayer, startGame, newPlayerName, setNewPlaye
 );
 
 const Frame = ({ frame, frameIndex, playerIndex, handleSelectCell, isCellClickable, getCellStyle }) => (
-  <div className={`flex flex-col border border-blue-600 rounded ${frameIndex === 9 ? 'col-span-2' : ''}`}>
-    <div className="text-center border-b border-blue-600 py-1 bg-blue-800 rounded-t">{frameIndex + 1}</div>
+  <div className={`flex flex-col ${frameIndex === 9 ? 'col-span-2' : 'col-span-1'}`}>
     <div className="flex">
       {frame.map((roll, rollIndex) => (
         <motion.div
@@ -69,43 +68,80 @@ const Frame = ({ frame, frameIndex, playerIndex, handleSelectCell, isCellClickab
   </div>
 );
 
-const Scoreboard = ({ players, handleSelectCell, isCellClickable, getCellStyle }) => (
-  <div className="w-full lg:w-3/4 pr-4">
+const Scoreboard = ({ players, handleSelectCell, isCellClickable, getCellStyle, currentPlayerIndex }) => (
+  <div className="w-full bg-blue-900 p-6 rounded-lg shadow-lg border-2 border-blue-400">
+    <div className="mb-4 grid grid-cols-12 gap-1 text-center text-sm text-blue-300">
+      <div className="col-span-2">PLAYER</div>
+      {[...Array(10)].map((_, i) => (
+        <div key={i} className="col-span-1">{i + 1}</div>
+      ))}
+      <div className="col-span-1">TOTAL</div>
+    </div>
     {players.map((player, playerIndex) => (
-      <div key={playerIndex} className="mb-6">
-        <div className="flex items-center mb-2">
-          <div className="w-1/6 font-bold text-center bg-blue-800 border-l-2 rounded-l-md border-blue-500 py-2">{player.name}</div>
-          <div className="flex-1 grid grid-cols-11 gap-1">
-            {player.frames.map((frame, frameIndex) => (
-              <Frame
-                key={frameIndex}
-                frame={frame}
-                frameIndex={frameIndex}
-                playerIndex={playerIndex}
-                handleSelectCell={handleSelectCell}
-                isCellClickable={isCellClickable}
-                getCellStyle={getCellStyle}
-              />
-            ))}
-          </div>
-          <div className="w-1/6 text-center font-bold bg-blue-800 rounded-r-md py-2">{player.totalScore}</div>
+      <motion.div
+        key={playerIndex}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: playerIndex * 0.1 }}
+        className={`grid grid-cols-12 gap-1 mb-2 p-2 rounded ${
+          playerIndex === currentPlayerIndex ? 'bg-yellow-500 text-blue-900' : 'bg-blue-800 text-blue-300'
+        }`}
+      >
+        <div className="col-span-2 truncate">{player.name}</div>
+        {player.frames.map((frame, frameIndex) => (
+          <Frame
+            key={frameIndex}
+            frame={frame}
+            frameIndex={frameIndex}
+            playerIndex={playerIndex}
+            handleSelectCell={handleSelectCell}
+            isCellClickable={isCellClickable}
+            getCellStyle={getCellStyle}
+          />
+        ))}
+        <div className="col-span-1 flex items-center justify-center bg-blue-700">
+          {player.totalScore}
         </div>
-      </div>
+      </motion.div>
     ))}
+    <div className="mt-6 flex justify-between items-end">
+      <div className="flex space-x-2">
+        {[...Array(10)].map((_, i) => (
+          <motion.div
+            key={i}
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: i * 0.05 }}
+            className="w-4 h-8 bg-white rounded-full"
+          />
+        ))}
+      </div>
+      <div className="text-4xl font-bold text-blue-300 tracking-wider">
+        STRIKE!
+      </div>
+      <motion.div
+        initial={{ rotate: -45, x: 50 }}
+        animate={{ rotate: 0, x: 0 }}
+        transition={{ type: "spring", stiffness: 100 }}
+        className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center text-2xl font-bold"
+      >
+        🎳
+      </motion.div>
+    </div>
   </div>
 );
 
 const Leaderboard = ({ sortedPlayers }) => (
-  <div className="w-full lg:w-1/4 mt-6 lg:mt-0">
-    <div className="bg-gradient-to-br from-blue-900 to-blue-700 p-4 rounded-lg shadow-lg">
-      <h3 className="text-2xl mb-4 font-bold text-center">Leaderboard</h3>
+  <div className="w-full mt-6">
+    <div className="bg-blue-900 p-4 rounded-lg shadow-lg border-2 border-blue-400">
+      <h3 className="text-2xl mb-4 font-bold text-center text-blue-300">Leaderboard</h3>
       {sortedPlayers.map((player, index) => (
         <motion.div
           key={index}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.1 }}
-          className={`flex justify-between items-center mb-2 p-3 rounded ${index === 0 ? "bg-yellow-600" : "bg-blue-800"}`}
+          className={`flex justify-between items-center mb-2 p-3 rounded ${index === 0 ? "bg-yellow-500 text-blue-900" : "bg-blue-800 text-blue-300"}`}
         >
           <span>{index + 1}. {player.name}</span>
           <span className="flex items-center">
@@ -129,10 +165,10 @@ const ScoreModal = ({ handleSelectScore, handleReturnButton, getAvailableScores,
       initial={{ scale: 0.9 }}
       animate={{ scale: 1 }}
       exit={{ scale: 0.9 }}
-      className="bg-gradient-to-br from-blue-900 to-blue-700 p-6 rounded-lg shadow-lg"
+      className="bg-blue-900 p-6 rounded-lg shadow-lg border-2 border-blue-400"
     >
       <div className="flex justify-end mb-4">
-        <button onClick={handleReturnButton} className="text-white hover:text-gray-300 transition-colors">
+        <button onClick={handleReturnButton} className="text-blue-300 hover:text-blue-100 transition-colors">
           <X size={24} />
         </button>
       </div>
@@ -142,7 +178,7 @@ const ScoreModal = ({ handleSelectScore, handleReturnButton, getAvailableScores,
             key={score}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="bg-blue-600 hover:bg-blue-700 transition-colors px-4 py-3 rounded-md text-lg font-semibold"
+            className="bg-blue-700 hover:bg-blue-600 transition-colors px-4 py-3 rounded-md text-lg font-semibold text-blue-300"
             onClick={() => handleSelectScore(score)}
           >
             {score === 10 ? 'X' : score}
@@ -162,6 +198,7 @@ const BowlingDashboard = () => {
   const [winnerIndex, setWinnerIndex] = useState(null);
   const [isGameOver, setIsGameOver] = useState(false);
   const [width, height] = useWindowSize();
+  const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
 
   const addPlayer = () => {
     if (newPlayerName.trim()) {
@@ -173,7 +210,6 @@ const BowlingDashboard = () => {
   const startGame = () => {
     if (players.length > 0) {
       setGameStarted(true);
-      // Set the initial selected cell to the first player's first roll
       setSelectedCell({ playerIndex: 0, frameIndex: 0, rollIndex: 0 });
     } else {
       alert("Please add at least one player before starting the game.");
@@ -188,37 +224,30 @@ const BowlingDashboard = () => {
   };
 
   const isCellClickable = (playerIndex, frameIndex, rollIndex) => {
-    if (isGameOver) return false;
     if (!gameStarted) return false;
     
     if (selectedCell.playerIndex === null) {
       return playerIndex === 0 && frameIndex === 0 && rollIndex === 0;
     }
 
-    // Prevent modifying previous rolls
     if (playerIndex < selectedCell.playerIndex) return false;
     if (playerIndex === selectedCell.playerIndex && frameIndex < selectedCell.frameIndex) return false;
     if (playerIndex === selectedCell.playerIndex && frameIndex === selectedCell.frameIndex && rollIndex < selectedCell.rollIndex) return false;
 
-    // Allow clicking on the current roll or the next available roll
     if (playerIndex === selectedCell.playerIndex && frameIndex === selectedCell.frameIndex) {
       return rollIndex === selectedCell.rollIndex || 
              (rollIndex === selectedCell.rollIndex + 1 && players[playerIndex].frames[frameIndex][selectedCell.rollIndex] !== null);
     }
 
-    // Allow clicking on the first roll of the next frame for the current player
     if (playerIndex === selectedCell.playerIndex && frameIndex === selectedCell.frameIndex + 1) {
       return rollIndex === 0 && players[playerIndex].frames[selectedCell.frameIndex].every(roll => roll !== null);
     }
 
-    // Allow clicking on the first roll of the first frame for the next player
     if (playerIndex === (selectedCell.playerIndex + 1) % players.length && frameIndex === 0 && rollIndex === 0) {
       return players[selectedCell.playerIndex].frames[selectedCell.frameIndex].every(roll => roll !== null);
     }
 
-    // Special case for the 10th frame
     if (frameIndex === 9) {
-      // Only allow clicking on the 10th frame if all previous frames are completed
       const allPreviousFramesCompleted = players[playerIndex].frames.slice(0, 9).every(frame => frame.every(roll => roll !== null));
       if (!allPreviousFramesCompleted) return false;
 
@@ -234,14 +263,16 @@ const BowlingDashboard = () => {
   };
   
   const getCellStyle = (playerIndex, frameIndex, rollIndex, roll, clickable) => {
-    let classes = "border border-blue-700 px-2 py-1 w-8 h-8 text-center ";
+    let classes = "px-2 py-1 text-center ";
     
     if (roll !== null) {
-      classes += "bg-blue-900 text-gray-300 "; // Filled rolls are darker and text is slightly faded
+      classes += "bg-blue-700 text-blue-300 ";
+    } else {
+      classes += "bg-blue-800 text-blue-300 ";
     }
     
     if (clickable) {
-      classes += "cursor-pointer hover:bg-blue-800 ";
+      classes += "cursor-pointer hover:bg-blue-600 ";
     } else {
       classes += "cursor-not-allowed ";
     }
@@ -251,7 +282,7 @@ const BowlingDashboard = () => {
       selectedCell.frameIndex === frameIndex &&
       selectedCell.rollIndex === rollIndex
     ) {
-      classes += "bg-blue-700 ";
+      classes += "bg-blue-500 text-white ";
     }
     
     return classes.trim();
@@ -266,7 +297,6 @@ const BowlingDashboard = () => {
         const newFrame = [...newFrames[frameIndex]];
 
         if (frameIndex < 9) {
-          // Logic for frames 1-9 remains the same
           if (rollIndex === 1) {
             const firstRoll = newFrame[0];
             if (firstRoll !== null && firstRoll !== 10 && firstRoll + score > 10) {
@@ -280,7 +310,6 @@ const BowlingDashboard = () => {
             newFrame[rollIndex] = '/';
           }
         } else {
-          // 10th frame logic
           if (rollIndex === 0) {
             newFrame[rollIndex] = score;
           } else if (rollIndex === 1) {
@@ -318,21 +347,22 @@ const BowlingDashboard = () => {
       } else {
         const nextPlayerIndex = (playerIndex + 1) % players.length;
         setSelectedCell({ playerIndex: nextPlayerIndex, frameIndex: nextPlayerIndex === 0 ? frameIndex + 1 : frameIndex, rollIndex: 0 });
+        setCurrentPlayerIndex(nextPlayerIndex);
       }
     } else {
-      // 10th frame logic
       const frame = players[playerIndex].frames[frameIndex];
       if (rollIndex === 0) {
         setSelectedCell({ playerIndex, frameIndex, rollIndex: 1 });
       } else if (rollIndex === 1) {
         if (frame[0] === 10 || frame[1] === '/' || (frame[0] !== null && frame[1] !== null && frame[0] + frame[1] === 10)) {
           setSelectedCell({ playerIndex, frameIndex, rollIndex: 2 });
-        } else if(frame[2] !== null) {
+        } else {
           const nextPlayerIndex = (playerIndex + 1) % players.length;
           if (nextPlayerIndex === 0) {
             setIsGameOver(true);
           } else {
             setSelectedCell({ playerIndex: nextPlayerIndex, frameIndex: 9, rollIndex: 0 });
+            setCurrentPlayerIndex(nextPlayerIndex);
           }
         }
       } else {
@@ -341,6 +371,7 @@ const BowlingDashboard = () => {
           setIsGameOver(true);
         } else {
           setSelectedCell({ playerIndex: nextPlayerIndex, frameIndex: 9, rollIndex: 0 });
+          setCurrentPlayerIndex(nextPlayerIndex);
         }
       }
     }
@@ -396,30 +427,29 @@ const BowlingDashboard = () => {
     if (frameIndex === 9) {
       const frame = players[playerIndex].frames[frameIndex];
       if (rollIndex === 0) {
-        return [...Array(11)].map((_, i) => i); // First roll in the 10th frame
+        return [...Array(11)].map((_, i) => i);
       } else if (rollIndex === 1) {
         if (frame[0] === 10) {
-          return [...Array(11)].map((_, i) => i); // Second roll, first was a strike
+          return [...Array(11)].map((_, i) => i);
         } else {
-          return [...Array(11 - frame[0])].map((_, i) => i); // Second roll, show remaining for a spare
+          return [...Array(11 - frame[0])].map((_, i) => i);
         }
       } else if (rollIndex === 2) {
-        return [...Array(11)].map((_, i) => i); // Third roll, all numbers available
+        return [...Array(11)].map((_, i) => i);
       }
     }
   
     if (rollIndex === 0) {
-      return [...Array(11)].map((_, i) => i); // First roll in frames 1-9
+      return [...Array(11)].map((_, i) => i);
     } else {
       const firstRoll = players[playerIndex].frames[frameIndex][0];
       if (firstRoll === 10) {
-        return [...Array(11)].map((_, i) => i); // Second roll, first was a strike
+        return [...Array(11)].map((_, i) => i);
       } else {
-        return [...Array(11 - firstRoll)].map((_, i) => i); // Second roll, show remaining for a spare
+        return [...Array(11 - firstRoll)].map((_, i) => i);
       }
     }
   };
-  
 
   const handleReturnButton = () => {
     setShowScoreModal(false);
@@ -431,6 +461,7 @@ const BowlingDashboard = () => {
     setSelectedCell({ playerIndex: null, frameIndex: null, rollIndex: null });
     setWinnerIndex(null);
     setIsGameOver(false);
+    setCurrentPlayerIndex(0);
   };
 
   const resetGame = () => {
@@ -443,12 +474,13 @@ const BowlingDashboard = () => {
     setSelectedCell({ playerIndex: 0, frameIndex: 0, rollIndex: 0 });
     setWinnerIndex(null);
     setIsGameOver(false);
+    setCurrentPlayerIndex(0);
   };
+
   const sortedPlayers = [...players].sort((a, b) => b.totalScore - a.totalScore);
 
-
   return (
-    <div className="p-6 text-white font-bold min-h-screen bg-gradient-to-br from-blue-900 to-blue-700">
+    <div className="p-6 text-blue-300 font-bold min-h-screen bg-blue-950">
       <AnimatePresence>
         {!gameStarted ? (
           <PlayerSetup
@@ -469,22 +501,22 @@ const BowlingDashboard = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={returnToPlayerScreen}
-                className="bg-blue-600 hover:bg-blue-700 transition-colors px-4 py-2 rounded-md flex items-center"
+                className="bg-blue-700 hover:bg-blue-600 transition-colors px-4 py-2 rounded-md flex items-center"
               >
                 <ArrowLeft size={24} className="mr-2" />
                 Return
               </motion.button>
             </div>
             
-            <div className="flex flex-col lg:flex-row">
-              <Scoreboard
-                players={players}
-                handleSelectCell={handleSelectCell}
-                isCellClickable={isCellClickable}
-                getCellStyle={getCellStyle}
-              />
-              <Leaderboard sortedPlayers={sortedPlayers} />
-            </div>
+            <Scoreboard
+              players={players}
+              handleSelectCell={handleSelectCell}
+              isCellClickable={isCellClickable}
+              getCellStyle={getCellStyle}
+              currentPlayerIndex={currentPlayerIndex}
+            />
+            
+            <Leaderboard sortedPlayers={sortedPlayers} />
 
             <AnimatePresence>
               {showScoreModal && (
@@ -525,7 +557,7 @@ const BowlingDashboard = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={resetGame}
-            className="bg-green-600 hover:bg-green-700 transition-colors px-6 py-3 rounded-md text-lg font-semibold"
+            className="bg-blue-700 hover:bg-blue-600 transition-colors px-6 py-3 rounded-md text-lg font-semibold"
           >
             Reset Game
           </motion.button>
