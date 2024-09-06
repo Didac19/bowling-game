@@ -4,7 +4,10 @@ import Confetti from 'react-confetti';
 import { useWindowSize } from '@react-hook/window-size';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const PlayerSetup = ({ players, addPlayer, startGame, newPlayerName, setNewPlayerName }) => (
+
+
+const PlayerSetup = ({ players, addPlayer, startGame, newPlayerName, setNewPlayerName, handleKeyDown }) => (
+
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -20,6 +23,7 @@ const PlayerSetup = ({ players, addPlayer, startGame, newPlayerName, setNewPlaye
           onChange={(e) => setNewPlayerName(e.target.value)}
           className="flex-grow text-black p-2 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Enter player name"
+          onKeyDown={handleKeyDown}
         />
         <button onClick={addPlayer} className="bg-green-600 hover:bg-green-700 transition-colors px-4 py-2 rounded-r-md flex items-center">
           <UserPlus size={20} className="mr-2" />
@@ -162,11 +166,17 @@ const BowlingDashboard = () => {
   const [winnerIndex, setWinnerIndex] = useState(null);
   const [isGameOver, setIsGameOver] = useState(false);
   const [width, height] = useWindowSize();
+  
 
   const addPlayer = () => {
     if (newPlayerName.trim()) {
       setPlayers([...players, { name: newPlayerName, frames: [...Array(9).fill([null, null]), [null, null, null]], totalScore: 0 }]);
       setNewPlayerName('');
+    }
+  };
+  const handleKeyDown = (event) => {
+    if (event.key === 'Enter') {
+        addPlayer()
     }
   };
 
@@ -457,6 +467,7 @@ const BowlingDashboard = () => {
             startGame={startGame}
             newPlayerName={newPlayerName}
             setNewPlayerName={setNewPlayerName}
+            handleKeyDown={handleKeyDown}
           />
         ) : (
           <motion.div
