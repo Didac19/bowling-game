@@ -1,12 +1,19 @@
 import './App.css'
-import BowlingDashboard from './components/BowlingDashboard'
 import BowlingDashboard2 from './components/BowlingDashboard2'
+import bowlingBg from './assets/bowling.jpg'
 
 function App() {
-
   return (
-    <div className='bg-gradient-to-br from-blue-800 to-blue-900'>
-      <BowlingDashboard2/>
+    <div className='relative min-h-screen' style={{
+      backgroundImage: `url(${bowlingBg})`,
+      backgroundSize: 'contain',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat'
+    }}>
+      <div className='absolute inset-0 bg-gradient-to-br from-indigo-900/90 to-purple-950/90'></div>
+      <div className='relative z-10 select-none'>
+        <BowlingDashboard2 />
+      </div>
     </div>
   )
 }
