@@ -67,10 +67,48 @@ const Frame = ({ frame, frameIndex, playerIndex, handleSelectCell, isCellClickab
               }
             }}
             whileHover={isCellClickable(playerIndex, frameIndex, rollIndex) ? { scale: 1.1 } : {}}
-            className={`${getCellStyle(playerIndex, frameIndex, rollIndex, roll, isCellClickable(playerIndex, frameIndex, rollIndex))} flex-1 ${frameIndex === 9 ? 'w-1/3' : 'w-1/2'}`}
+            className={`${getCellStyle(playerIndex, frameIndex, rollIndex, roll, isCellClickable(playerIndex, frameIndex, rollIndex))} flex-1 ${frameIndex === 9 ? 'w-1/3' : 'w-1/2'} relative`}
             onClick={() => isCellClickable(playerIndex, frameIndex, rollIndex) && handleSelectCell(playerIndex, frameIndex, rollIndex)}
           >
-            {roll === 10 ? 'X' : roll === '/' ? '/' : roll !== null ? roll : ''}
+            {roll === 10 ? (
+              <>
+                <motion.span
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 10 }}
+                  className="absolute inset-0 flex items-center justify-center text-amber-400 font-bold"
+                >
+                  X
+                </motion.span>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-amber-300/20"
+                />
+              </>
+            ) : roll === '/' ? (
+              <>
+                <motion.span
+                  initial={{ scale: 0, y: -20 }}
+                  animate={{ scale: 1, y: 0 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 10 }}
+                  className="absolute inset-0 flex items-center justify-center text-emerald-400 font-bold"
+                >
+                  /
+                </motion.span>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-emerald-300/20"
+                />
+              </>
+            ) : roll !== null ? (
+              <span className="absolute inset-0 flex items-center justify-center">
+                {roll}
+              </span>
+            ) : null}
           </motion.div>
         );
       })}
@@ -82,7 +120,6 @@ const Frame = ({ frame, frameIndex, playerIndex, handleSelectCell, isCellClickab
 );
 
 const Scoreboard = ({ players, handleSelectCell, isCellClickable, getCellStyle, selectedCell, cellRefs }) => {
-  // Reorder players array to show active player first
   const reorderedPlayers = selectedCell.playerIndex !== null
     ? [
       players[selectedCell.playerIndex],
@@ -191,25 +228,25 @@ const ScoreModal = ({ handleSelectScore, handleReturnButton, getAvailableScores,
       initial={{ scale: 0.9, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       exit={{ scale: 0.9, opacity: 0 }}
-      className="bg-gradient-to-br from-indigo-900 to-purple-800 p-4 rounded-lg shadow-lg absolute z-50"
+      className="bg-gradient-to-br from-indigo-900 to-purple-800 p-6 rounded-lg shadow-lg absolute z-50"
       style={{
         top: `${position.top - 10}px`,
         left: `${position.left}px`,
         transform: 'translateY(-100%)'
       }}
     >
-      <div className="flex justify-end mb-2">
+      <div className="flex justify-end mb-4">
         <button onClick={handleReturnButton} className="text-white hover:text-gray-300 transition-colors">
-          <X size={20} />
+          <X size={24} />
         </button>
       </div>
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-5 gap-3">
         {getAvailableScores(selectedCell.playerIndex, selectedCell.frameIndex, selectedCell.rollIndex).map((score) => (
           <motion.button
             key={score}
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
-            className="bg-indigo-600 hover:bg-indigo-700 transition-colors px-3 py-2 rounded-md text-base font-semibold"
+            className="bg-indigo-600 hover:bg-indigo-700 transition-colors px-4 py-3 rounded-md text-lg font-semibold min-w-[3rem] min-h-[3rem] flex items-center justify-center"
             onClick={() => handleSelectScore(score)}
           >
             {score === 10 ? 'X' : score}
@@ -262,7 +299,6 @@ const BowlingDashboard = () => {
     if (isCellClickable(playerIndex, frameIndex, rollIndex)) {
       setSelectedCell({ playerIndex, frameIndex, rollIndex });
 
-      // Get the position of the selected cell
       const cellKey = `${playerIndex}-${frameIndex}-${rollIndex}`;
       const cellElement = cellRefs.current[cellKey];
 
@@ -389,6 +425,18 @@ const BowlingDashboard = () => {
         setIsGameOver(true);
       } else {
         setSelectedCell({ playerIndex: nextPlayerIndex, frameIndex: nextFrameIndex, rollIndex: nextRollIndex });
+
+        const nextCellKey = `${nextPlayerIndex}-${nextFrameIndex}-${nextRollIndex}`;
+        const nextCellElement = cellRefs.current[nextCellKey];
+
+        if (nextCellElement) {
+          const rect = nextCellElement.getBoundingClientRect();
+          setModalPosition({
+            top: rect.top,
+            left: rect.left + (rect.width / 2)
+          });
+          setShowScoreModal(true);
+        }
       }
 
       const allCellsFilled = newPlayers.every(player =>
@@ -408,112 +456,94 @@ const BowlingDashboard = () => {
 
       return newPlayers;
     });
-    setShowScoreModal(false);
   };
 
   const calculateScore = (frames) => {
-    let score = 0;
+    let totalScore = 0;
     const frameScores = Array(10).fill(null);
 
-    for (let i = 0; i < frames.length; i++) {
-      // Skip incomplete frames
+    for (let i = 0; i < 10; i++) {
+      const frame = frames[i];
+
+      if (!frame || frame[0] === null) break;
+
       if (i < 9) {
-        // Regular frames (1-9)
-        const [roll1, roll2] = frames[i];
-
-        // Skip if first roll is not filled yet
-        if (roll1 === null) break;
-
-        // Strike
-        if (roll1 === 10) {
-          // Need two more rolls for strike bonus
-          let bonusRolls = [];
-
-          // Look ahead to next frame
-          if (i + 1 < frames.length) {
-            const nextFrame = frames[i + 1];
-            if (nextFrame[0] !== null) {
-              bonusRolls.push(nextFrame[0] === 10 ? 10 : nextFrame[0]);
-
-              // If next roll is also a strike, need to look one more roll ahead
-              if (nextFrame[0] === 10) {
-                if (i + 2 < 9 && frames[i + 2][0] !== null) {
-                  bonusRolls.push(frames[i + 2][0]);
-                } else if (i + 1 === 9 && nextFrame[1] !== null) {
-                  bonusRolls.push(nextFrame[1] === '/' ? 10 - nextFrame[0] : nextFrame[1]);
+        if (frame[0] === 10) {
+          let nextRolls = [];
+          if (i + 1 < 10 && frames[i + 1][0] !== null) {
+            nextRolls.push(frames[i + 1][0]);
+            if (frames[i + 1][0] === 10) {
+              if (i + 1 === 9) {
+                if (frames[i + 1][1] !== null) {
+                  nextRolls.push(frames[i + 1][1]);
                 }
-              } else if (nextFrame[1] !== null) {
-                bonusRolls.push(nextFrame[1] === '/' ? 10 - nextFrame[0] : nextFrame[1]);
+              } else if (i + 2 < 10 && frames[i + 2][0] !== null) {
+                nextRolls.push(frames[i + 2][0]);
+              } else if (i + 1 === 9 && frames[i + 1][1] !== null) {
+                nextRolls.push(frames[i + 1][1]);
               }
+            } else if (frames[i + 1][1] !== null) {
+              nextRolls.push(frames[i + 1][1] === '/' ? 10 - frames[i + 1][0] : frames[i + 1][1]);
             }
           }
-
-          // Only count frame if we have both bonus rolls for a strike
-          if (bonusRolls.length === 2) {
-            score += 10 + bonusRolls[0] + bonusRolls[1];
-            frameScores[i] = score;
+          if (nextRolls.length === 2) {
+            totalScore += 10 + nextRolls[0] + nextRolls[1];
+            frameScores[i] = totalScore;
           } else {
-            break; // Not enough info to score this frame yet
+            break;
           }
-        }
-        // Spare
-        else if (roll2 === '/') {
-          // Need one more roll for spare bonus
-          let bonusRoll = null;
-
-          // Look ahead to next frame
-          if (i + 1 < frames.length && frames[i + 1][0] !== null) {
-            bonusRoll = frames[i + 1][0];
-          }
-
-          // Only count frame if we have the bonus roll for a spare
-          if (bonusRoll !== null) {
-            score += 10 + bonusRoll;
-            frameScores[i] = score;
+        } else if (frame[1] === '/') {
+          if (i + 1 < 10 && frames[i + 1][0] !== null) {
+            totalScore += 10 + frames[i + 1][0];
+            frameScores[i] = totalScore;
           } else {
-            break; // Not enough info to score this frame yet
+            break;
           }
-        }
-        // Open frame
-        else if (roll2 !== null) {
-          score += roll1 + roll2;
-          frameScores[i] = score;
+        } else if (frame[1] !== null) {
+          totalScore += frame[0] + frame[1];
+          frameScores[i] = totalScore;
         } else {
-          break; // Second roll not filled yet
+          break;
         }
       } else {
-        // 10th frame special rules
-        const [roll1, roll2, roll3] = frames[i];
-
-        // Need at least first two rolls
-        if (roll1 === null || roll2 === null) break;
-
-        // Strike or spare in 10th frame needs third roll
-        if ((roll1 === 10 || roll2 === '/') && roll3 === null) break;
-
-        // Calculate 10th frame score
-        let frameScore = roll1;
-
-        if (roll2 === '/') {
-          frameScore = 10;
-        } else {
-          frameScore += roll2;
-        }
-
-        if (roll3 !== null) {
-          if (roll3 === '/') {
-            frameScore += (10 - roll2);
+        if (frame[0] === 10) {
+          if (frame[1] === null) break;
+          if (frame[1] === 10) {
+            if (frame[2] === null) break;
+            totalScore += 10 + 10 + (frame[2] === 10 ? 10 : frame[2]);
           } else {
-            frameScore += roll3;
+            if (frame[2] === null && frame[1] === '/') {
+              break;
+            } else if (frame[2] === null) {
+              totalScore += 10 + frame[1];
+            } else if (frame[1] === '/') {
+              totalScore += 10 + 10;
+            } else {
+              totalScore += 10 + frame[1] + frame[2];
+            }
           }
+        } else if (frame[0] !== null && frame[1] === '/') {
+          if (frame[2] === null) break;
+          totalScore += 10 + frame[2];
+        } else if (frame[0] !== null && frame[1] !== null) {
+          totalScore += frame[0] + frame[1];
+        } else {
+          break;
         }
-
-        score += frameScore;
-        frameScores[i] = score;
+        frameScores[9] = totalScore;
       }
     }
 
-    return { totalScore: score, frameScores };
+    let lastScore = 0;
+    for (let i = 0; i < frameScores.length; i++) {
+      if (frameScores[i] !== null) {
+        lastScore = frameScores[i];
+      } else if (i > 0 && frameScores[i - 1] !== null) {
+        frameScores[i] = lastScore;
+      }
+    }
+
+    return { totalScore, frameScores };
   };
 
   const getAvailableScores = (playerIndex, frameIndex, rollIndex) => {
@@ -559,6 +589,7 @@ const BowlingDashboard = () => {
     const resetPlayers = players.map(player => ({
       ...player,
       frames: Array(9).fill([null, null]).concat([[null, null, null]]),
+      frameScores: Array(10).fill(null),
       totalScore: 0
     }));
     setPlayers(resetPlayers);
@@ -567,6 +598,8 @@ const BowlingDashboard = () => {
   };
 
   const sortedPlayers = [...players].sort((a, b) => b.totalScore - a.totalScore);
+  const highestScore = sortedPlayers[0]?.totalScore;
+  const tiedPlayers = highestScore != null ? sortedPlayers.filter(player => player.totalScore === highestScore) : [];
 
   return (
     <div className="p-6 text-white font-bold min-h-screen">
@@ -587,15 +620,28 @@ const BowlingDashboard = () => {
             exit={{ opacity: 0 }}
           >
             <div className="flex justify-between items-center mb-6 w-full">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={returnToPlayerScreen}
-                className="bg-indigo-600 hover:bg-indigo-700 transition-colors px-4 py-2 rounded-md flex items-center"
-              >
-                <ArrowLeft size={24} className="mr-2" />
-                Volver
-              </motion.button>
+              <div className="flex gap-4">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={returnToPlayerScreen}
+                  className="bg-indigo-600 hover:bg-indigo-700 transition-colors px-4 py-2 rounded-md flex items-center"
+                >
+                  <ArrowLeft size={24} className="mr-2" />
+                  Volver
+                </motion.button>
+                {isGameOver || !gameStarted && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={resetGame}
+                    className="bg-pink-600 hover:bg-pink-700 transition-colors px-4 py-2 rounded-md flex items-center"
+                  >
+                    <Play size={24} className="mr-2" />
+                    Reiniciar Juego
+                  </motion.button>
+                )}
+              </div>
             </div>
 
             <div className="flex flex-col lg:flex-row">
@@ -623,7 +669,7 @@ const BowlingDashboard = () => {
             </AnimatePresence>
 
             <AnimatePresence>
-              {isGameOver && (
+              {isGameOver && sortedPlayers.length > 0 && (
                 <>
                   {/* Darkened background overlay */}
                   <motion.div
@@ -647,44 +693,42 @@ const BowlingDashboard = () => {
                         className="absolute top-2 right-2 text-indigo-900 hover:text-indigo-700 transition-colors"
                       >
                         <X size={24} />
-                      </button
-                      >
+                      </button>
                       <div className="flex items-center mb-2">
                         <Trophy size={32} className="text-amber-600 mr-3" />
-                        <h2 className="text-3xl uppercase tracking-wider">¡Campeón!</h2>
+                        <h2 className="text-3xl uppercase tracking-wider">
+                          {tiedPlayers.length > 1 ? '¡Empate!' : '¡Campeón!'}
+                        </h2>
                         <Trophy size={32} className="text-amber-600 ml-3" />
                       </div>
-                      <p className="text-2xl">{sortedPlayers[0].name}</p>
+                      {tiedPlayers.length > 1 ? (
+                        <p className="text-2xl">{tiedPlayers.map(player => player.name).join(', ')}</p>
+                      ) : (
+                        <p className="text-2xl">{sortedPlayers[0].name}</p>
+                      )}
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: [0, 1.2, 1] }}
                         transition={{ delay: 0.3, duration: 0.5 }}
-                        className="mt-2 bg-indigo-800 text-white px-4 py-1 rounded-full text-xl">
-                        {sortedPlayers[0].totalScore} puntos
+                        className="mt-2 bg-indigo-800 text-white px-4 py-1 rounded-full text-xl"
+                      >
+                        {highestScore} puntos
                       </motion.div>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={resetGame}
+                        className="mt-6 bg-pink-600 hover:bg-pink-700 transition-colors px-6 py-3 rounded-md flex items-center text-lg"
+                      >
+                        <Play size={24} className="mr-2" />
+                        Reiniciar Juego
+                      </motion.button>
                       <Confetti width={width} height={height} recycle={false} numberOfPieces={500} />
                     </motion.div>
                   </motion.div>
                 </>
               )}
             </AnimatePresence>
-
-            {isGameOver && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex justify-center mt-6"
-              >
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={resetGame}
-                  className="bg-pink-600 hover:bg-pink-700 transition-colors px-6 py-3 rounded-md text-lg font-semibold"
-                >
-                  Reiniciar
-                </motion.button>
-              </motion.div>
-            )}
           </motion.div>
         )}
       </AnimatePresence>
