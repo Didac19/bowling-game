@@ -20,13 +20,13 @@ class AudioManager {
 
     async preloadSounds() {
         const soundFiles = [
-            { name: 'strike1', url: '/src/assets/sounds/strike1.mp3' },
-            { name: 'strike2', url: '/src/assets/sounds/strike2.mp3' },
-            { name: 'spare1', url: '/src/assets/sounds/spare1.mp3' },
-            { name: 'gutter_en', url: '/src/assets/sounds/gutter_en.mp3' },
-            { name: 'gutter_es', url: '/src/assets/sounds/gutter_es.mp3' },
-            { name: 'motiv2', url: '/src/assets/sounds/motiv2.mp3' },
-            { name: 'motiv3', url: '/src/assets/sounds/motiv3.mp3' }
+            { name: 'strike1', url: '/sounds/strike1.mp3' },
+            { name: 'strike2', url: '/sounds/strike2.mp3' },
+            { name: 'spare1', url: '/sounds/spare1.mp3' },
+            { name: 'gutter_en', url: '/sounds/gutter_en.mp3' },
+            { name: 'gutter_es', url: '/sounds/gutter_es.mp3' },
+            { name: 'motiv2', url: '/sounds/motiv2.mp3' },
+            { name: 'motiv3', url: '/sounds/motiv3.mp3' }
 
         ];
 
