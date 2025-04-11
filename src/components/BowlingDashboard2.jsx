@@ -3,6 +3,7 @@ import { ArrowLeft, X, Trophy, UserPlus, Play } from 'lucide-react';
 import Confetti from 'react-confetti';
 import { useWindowSize } from '@react-hook/window-size';
 import { motion, AnimatePresence } from 'framer-motion';
+import audioManager from '../utils/audioManager';
 
 const PlayerSetup = ({ players, addPlayer, startGame, newPlayerName, setNewPlayerName, handleKeyDown }) => (
   <motion.div
@@ -268,6 +269,10 @@ const BowlingDashboard = () => {
   const [modalPosition, setModalPosition] = useState({ top: 0, left: 0 });
   const cellRefs = React.useRef({});
 
+  useEffect(() => {
+    audioManager.preloadSounds();
+  }, []);
+
   const addPlayer = () => {
     if (newPlayerName.trim()) {
       setPlayers([...players, {
@@ -316,11 +321,62 @@ const BowlingDashboard = () => {
 
   const isCellClickable = (playerIndex, frameIndex, rollIndex) => {
     if (isGameOver || !gameStarted) return false;
-    return (
-      playerIndex === selectedCell.playerIndex &&
-      frameIndex === selectedCell.frameIndex &&
-      rollIndex === selectedCell.rollIndex
-    );
+
+    // Only allow clicking on the current selected cell
+    if (playerIndex !== selectedCell.playerIndex ||
+      frameIndex !== selectedCell.frameIndex ||
+      rollIndex !== selectedCell.rollIndex) {
+      return false;
+    }
+
+    // Check if all previous frames are complete
+    for (let i = 0; i < frameIndex; i++) {
+      const frame = players[playerIndex].frames[i];
+      if (frame[0] === null || (frame[0] !== 10 && frame[1] === null)) {
+        return false;
+      }
+    }
+
+    // Check if previous player has completed their frames
+    if (frameIndex === 0 && playerIndex > 0) {
+      const prevPlayer = players[playerIndex - 1];
+      for (let i = 0; i < 10; i++) {
+        const frame = prevPlayer.frames[i];
+        if (i === 9) {
+          // Check 10th frame completion
+          if (frame[0] === null || frame[1] === null ||
+            ((frame[0] === 10 || frame[1] === '/') && frame[2] === null)) {
+            return false;
+          }
+        } else {
+          // Check regular frame completion
+          if (frame[0] === null || (frame[0] !== 10 && frame[1] === null)) {
+            return false;
+          }
+        }
+      }
+    }
+
+    // For 10th frame
+    if (frameIndex === 9) {
+      const frame = players[playerIndex].frames[9];
+      if (rollIndex === 0) return true;
+      if (rollIndex === 1) return frame[0] !== null;
+      if (rollIndex === 2) {
+        // Only allow third roll if first roll is strike or second roll is spare
+        return (frame[0] === 10 || frame[1] === '/') && frame[1] !== null;
+      }
+      return false;
+    }
+
+    // For regular frames
+    if (rollIndex === 0) return true;
+    if (rollIndex === 1) {
+      const frame = players[playerIndex].frames[frameIndex];
+      // Only allow second roll if first roll is not a strike
+      return frame[0] !== null && frame[0] !== 10;
+    }
+    return false;
   };
 
   const getCellStyle = (playerIndex, frameIndex, rollIndex, roll, clickable) => {
@@ -391,6 +447,34 @@ const BowlingDashboard = () => {
         totalScore: totalScore
       };
 
+      // Play appropriate sound based on frame result
+      if (frameIndex < 9) {
+        if (score === 10 && rollIndex === 0) {
+          audioManager.playSound('strike');
+        } else if (rollIndex === 1) {
+          if (newFrame[1] === '/') {
+            audioManager.playSound('spare');
+          } else if (newFrame[0] + score === 0) {
+            audioManager.playSound('gutter');
+          }
+          // else {
+          //   audioManager.playSound('regular');
+          // }
+        }
+      } else {
+        // 10th frame sound effects
+        if (score === 10) {
+          audioManager.playSound('strike');
+        } else if (newFrame[1] === '/') {
+          audioManager.playSound('spare');
+        } else if (rollIndex === 1 && newFrame[0] + score === 0) {
+          audioManager.playSound('gutter');
+        }
+        // else {
+        //   audioManager.playSound('regular');
+        // }
+      }
+
       let nextPlayerIndex = playerIndex;
       let nextFrameIndex = frameIndex;
       let nextRollIndex = rollIndex;
@@ -400,6 +484,7 @@ const BowlingDashboard = () => {
           nextRollIndex = 1;
         } else {
           nextPlayerIndex = (playerIndex + 1) % players.length;
+          audioManager.playSound('regular', 1500);
           nextFrameIndex = nextPlayerIndex === 0 ? frameIndex + 1 : frameIndex;
           nextRollIndex = 0;
         }
@@ -411,11 +496,13 @@ const BowlingDashboard = () => {
             nextRollIndex = 2;
           } else {
             nextPlayerIndex = (playerIndex + 1) % players.length;
+            audioManager.playSound('regular', 1500);
             nextFrameIndex = 9;
             nextRollIndex = 0;
           }
         } else if (rollIndex === 2) {
           nextPlayerIndex = (playerIndex + 1) % players.length;
+          audioManager.playSound('regular', 1500);
           nextFrameIndex = 9;
           nextRollIndex = 0;
         }
