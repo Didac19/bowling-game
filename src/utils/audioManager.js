@@ -1,10 +1,20 @@
 // Audio manager for bowling game sound effects
-const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+let audioContext;
 
 class AudioManager {
     constructor() {
         this.sounds = new Map();
         this.currentlyPlaying = new Set();
+        this.initAudioContext();
+    }
+
+    initAudioContext() {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
     }
 
     async loadSound(name, url) {

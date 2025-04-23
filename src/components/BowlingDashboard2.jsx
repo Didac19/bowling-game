@@ -31,18 +31,58 @@ const BowlingDashboard = () => {
     const savedPlayers = localStorage.getItem('bowlingPlayers');
     return savedPlayers ? JSON.parse(savedPlayers) : [];
   });
+  const [showPhrase, setShowPhrase] = useState(false);
+
+
+
+  const [resetCount, setResetCount] = useState(() => {
+    const savedCount = localStorage.getItem('bowlingResetCount');
+    return savedCount ? parseInt(savedCount) : 0;
+  });
 
   const resetPlayers = () => {
     setPlayers([]);
+    setResetCount(0);
     localStorage.removeItem('bowlingPlayers');
+    localStorage.removeItem('bowlingResetCount');
     setGameStarted(false);
     setSelectedCell({ playerIndex: null, frameIndex: null, rollIndex: null });
     setIsGameOver(false);
     setCurrentPhrase('');
   };
-  const [gameStarted, setGameStarted] = useState(false);
+  const [gameStarted, setGameStarted] = useState(() => {
+    const savedPlayers = localStorage.getItem('bowlingPlayers');
+    return savedPlayers ? true : false;
+  });
+  const [selectedCell, setSelectedCell] = useState(() => {
+    const savedCell = localStorage.getItem('bowlingSelectedCell');
+    if (savedCell) {
+      return JSON.parse(savedCell);
+    }
+    const savedPlayers = localStorage.getItem('bowlingPlayers');
+    if (savedPlayers) {
+      const players = JSON.parse(savedPlayers);
+      // Find the next empty cell
+      for (let i = 0; i < players.length; i++) {
+        for (let j = 0; j < 10; j++) {
+          const frame = players[i].frames[j];
+          if (j === 9) {
+            if (frame[0] === null) return { playerIndex: i, frameIndex: j, rollIndex: 0 };
+            if (frame[1] === null) return { playerIndex: i, frameIndex: j, rollIndex: 1 };
+            if ((frame[0] === 10 || frame[1] === '/') && frame[2] === null) {
+              return { playerIndex: i, frameIndex: j, rollIndex: 2 };
+            }
+          } else {
+            if (frame[0] === null) return { playerIndex: i, frameIndex: j, rollIndex: 0 };
+            if (frame[0] !== 10 && frame[1] === null) return { playerIndex: i, frameIndex: j, rollIndex: 1 };
+          }
+        }
+      }
+      return { playerIndex: null, frameIndex: null, rollIndex: null };
+    }
+    return { playerIndex: null, frameIndex: null, rollIndex: null };
+  });
   const [newPlayerName, setNewPlayerName] = useState('');
-  const [selectedCell, setSelectedCell] = useState({ playerIndex: null, frameIndex: null, rollIndex: null });
   const [showScoreModal, setShowScoreModal] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
   const [width, height] = useWindowSize();
@@ -80,6 +120,16 @@ const BowlingDashboard = () => {
     prevPlayerIndexRef.current = selectedCell.playerIndex;
   }, [selectedCell.playerIndex]);
 
+  useEffect(() => {
+    if (currentPhrase) {
+      setShowPhrase(true);
+      const timer = setTimeout(() => {
+        setShowPhrase(false);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [currentPhrase]);
+
   const addPlayer = () => {
     if (newPlayerName.trim()) {
       const newPlayers = [...players, {
@@ -101,7 +151,7 @@ const BowlingDashboard = () => {
   };
 
   const startGame = () => {
-    audioManager.preloadSounds();
+    // audioManager.preloadSounds();
     if (players.length > 0) {
       setGameStarted(true);
       setSelectedCell({ playerIndex: 0, frameIndex: 0, rollIndex: 0 });
@@ -308,7 +358,10 @@ const BowlingDashboard = () => {
       if (nextPlayerIndex === 0 && nextFrameIndex === 10) {
         setIsGameOver(true);
       } else {
-        setSelectedCell({ playerIndex: nextPlayerIndex, frameIndex: nextFrameIndex, rollIndex: nextRollIndex });
+        const nextCell = { playerIndex: nextPlayerIndex, frameIndex: nextFrameIndex, rollIndex: nextRollIndex };
+        setSelectedCell(nextCell);
+        // Save both players and selectedCell state
+        localStorage.setItem('bowlingSelectedCell', JSON.stringify(nextCell));
         const nextCellKey = `${nextPlayerIndex}-${nextFrameIndex}-${nextRollIndex}`;
         const nextCellElement = cellRefs.current[nextCellKey];
 
@@ -336,6 +389,9 @@ const BowlingDashboard = () => {
       if (allCellsFilled) {
         setIsGameOver(true);
       }
+
+      // Save the updated game state to localStorage
+      localStorage.setItem('bowlingPlayers', JSON.stringify(newPlayers));
 
       return newPlayers;
     });
@@ -476,7 +532,10 @@ const BowlingDashboard = () => {
       totalScore: 0
     }));
     setPlayers(resetPlayers);
+    const newResetCount = resetCount + 1;
+    setResetCount(newResetCount);
     localStorage.setItem('bowlingPlayers', JSON.stringify(resetPlayers));
+    localStorage.setItem('bowlingResetCount', newResetCount.toString());
     setSelectedCell({ playerIndex: 0, frameIndex: 0, rollIndex: 0 });
     setIsGameOver(false);
     setCurrentPhrase(motivationalPhrases[0]);
@@ -527,6 +586,8 @@ const BowlingDashboard = () => {
                     <Play size={24} className="mr-2" />
                     Opciones
                   </motion.button>
+
+
                   <AnimatePresence>
                     {showDropdown && (
                       <motion.div
@@ -553,20 +614,71 @@ const BowlingDashboard = () => {
                     )}
                   </AnimatePresence>
                 </div>
+                {resetCount > 0 && (
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="bg-blue-800 hover:bg-blue-900 transition-colors px-4 py-2 rounded-md flex items-center"
+                  >
+                    {resetCount > 0 && `Veces jugado: ${resetCount}`}
+                  </motion.div>
+                )}
+
               </div>
             </div>
 
             {/* Display motivational phrase above scoreboard */}
-            {currentPhrase && (
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="text-center text-2xl text-pink-400 mb-4 border-4 border-pink-100 p-4"
-              >
-                {currentPhrase}
-              </motion.div>
-            )}
+            <AnimatePresence>
+              {currentPhrase && showPhrase ? (
+                <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="text-center text-3xl font-extrabold text-pink-400 mb-6 
+                    bg-gradient-to-r from-indigo-900/50 to-pink-900/50
+                    border-4 border-pink-400/30 rounded-xl p-6
+                    shadow-lg shadow-pink-500/20
+                    backdrop-blur-sm
+                    transform hover:scale-105 transition-transform
+                    animate-pulse"
+                >
+                  <span className="bg-gradient-to-r from-pink-400 to-pink-200 text-transparent bg-clip-text">
+                    {currentPhrase}
+                  </span>
+                </motion.div>
+              ) : !isGameOver ? (
+                <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="text-center text-3xl font-extrabold text-pink-400 mb-6 
+                    bg-gradient-to-r from-indigo-900/50 to-pink-900/50
+                    border-4 border-pink-400/30 rounded-xl p-6
+                    shadow-lg shadow-pink-500/20
+                    backdrop-blur-sm
+                    transform hover:scale-105 transition-transform
+                    animate-pulse"
+                >¡Lánzalo!</motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="text-center text-3xl font-extrabold text-pink-400 mb-6
+                    bg-gradient-to-r from-indigo-900/50 to-pink-900/50
+                    border-4 border-pink-400/30 rounded-xl p-6
+                    shadow-lg shadow-pink-500/20
+                    backdrop-blur-sm
+                    transform hover:scale-105 transition-transform
+                    animate-pulse"
+                >
+                  ¡Juego terminado!
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <div className="flex flex-col lg:flex-row">
               <Scoreboard
@@ -587,6 +699,7 @@ const BowlingDashboard = () => {
                   handleReturnButton={handleReturnButton}
                   getAvailableScores={getAvailableScores}
                   selectedCell={selectedCell}
+                  players={players}
                   position={modalPosition}
                 />
               )}
@@ -595,6 +708,7 @@ const BowlingDashboard = () => {
             <AnimatePresence>
               {isGameOver && sortedPlayers.length > 0 && (
                 <>
+                  <Confetti width={width} height={height} recycle={false} numberOfPieces={500} />
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -645,7 +759,6 @@ const BowlingDashboard = () => {
                         <Play size={24} className="mr-2" />
                         Reiniciar Juego
                       </motion.button>
-                      <Confetti width={width} height={height} recycle={false} numberOfPieces={500} />
                     </motion.div>
                   </motion.div>
                 </>

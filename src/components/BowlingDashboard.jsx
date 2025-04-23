@@ -123,7 +123,7 @@ const BowlingDashboard = () => {
   const [winnerIndex, setWinnerIndex] = useState(null);
   const [isGameOver, setIsGameOver] = useState(false);
   const [width, height] = useWindowSize();
-  
+
   const addPlayer = () => {
     if (newPlayerName.trim()) {
       setPlayers([...players, { name: newPlayerName, frames: [...Array(9).fill([null, null]), [null, null, null]], totalScore: 0 }]);
@@ -151,7 +151,7 @@ const BowlingDashboard = () => {
   const isCellClickable = (playerIndex, frameIndex, rollIndex) => {
     if (isGameOver) return false;
     if (!gameStarted) return false;
-    
+
     if (selectedCell.playerIndex === null) {
       return playerIndex === 0 && frameIndex === 0 && rollIndex === 0;
     }
@@ -163,8 +163,8 @@ const BowlingDashboard = () => {
 
     // Allow clicking on the current roll or the next available roll
     if (playerIndex === selectedCell.playerIndex && frameIndex === selectedCell.frameIndex) {
-      return rollIndex === selectedCell.rollIndex || 
-             (rollIndex === selectedCell.rollIndex + 1 && players[playerIndex].frames[frameIndex][selectedCell.rollIndex] !== null);
+      return rollIndex === selectedCell.rollIndex ||
+        (rollIndex === selectedCell.rollIndex + 1 && players[playerIndex].frames[frameIndex][selectedCell.rollIndex] !== null);
     }
 
     // Allow clicking on the first roll of the next frame for the current player
@@ -190,23 +190,23 @@ const BowlingDashboard = () => {
         return (roll1 === 10 || roll2 === '/') && roll3 === null;
       }
     }
-    
+
     return false;
   };
-  
+
   const getCellStyle = (playerIndex, frameIndex, rollIndex, roll, clickable) => {
     let classes = "border border-blue-700 px-2 py-1 w-8 h-8 text-center ";
-    
+
     if (roll !== null) {
       classes += "bg-blue-900 text-gray-300 "; // Filled rolls are darker and text is slightly faded
     }
-    
+
     if (clickable) {
       classes += "cursor-pointer hover:bg-blue-800 ";
     } else {
       classes += "cursor-not-allowed ";
     }
-    
+
     if (
       selectedCell.playerIndex === playerIndex &&
       selectedCell.frameIndex === frameIndex &&
@@ -214,7 +214,7 @@ const BowlingDashboard = () => {
     ) {
       classes += "bg-blue-700 ";
     }
-    
+
     return classes.trim();
   };
 
@@ -288,7 +288,7 @@ const BowlingDashboard = () => {
       } else if (rollIndex === 1) {
         if (frame[0] === 10 || frame[1] === '/' || (frame[0] !== null && frame[1] !== null && frame[0] + frame[1] === 10)) {
           setSelectedCell({ playerIndex, frameIndex, rollIndex: 2 });
-        } else if(frame[2] !== null) {
+        } else if (frame[2] !== null) {
           const nextPlayerIndex = (playerIndex + 1) % players.length;
           if (nextPlayerIndex === 0) {
             setIsGameOver(true);
@@ -340,8 +340,8 @@ const BowlingDashboard = () => {
   };
 
   const checkGameOver = () => {
-    const allCellsFilled = players.every(player => 
-      player.frames.every((frame, index) => 
+    const allCellsFilled = players.every(player =>
+      player.frames.every((frame, index) =>
         index < 9 ? frame.every(roll => roll !== null) : frame[0] !== null && frame[1] !== null && (frame[2] !== null || frame[1] !== '/')
       )
     );
@@ -368,7 +368,7 @@ const BowlingDashboard = () => {
         return [...Array(11)].map((_, i) => i); // Third roll, all numbers available
       }
     }
-  
+
     if (rollIndex === 0) {
       return [...Array(11)].map((_, i) => i); // First roll in frames 1-9
     } else {
@@ -380,7 +380,7 @@ const BowlingDashboard = () => {
       }
     }
   };
-  
+
 
   const handleReturnButton = () => {
     setShowScoreModal(false);
@@ -425,7 +425,7 @@ const BowlingDashboard = () => {
               Return
             </button>
           </div>
-          
+
           <div className="flex">
             <Scoreboard
               players={players}
@@ -442,6 +442,8 @@ const BowlingDashboard = () => {
               handleReturnButton={handleReturnButton}
               getAvailableScores={getAvailableScores}
               selectedCell={selectedCell}
+              players={players}
+              position={position}
             />
           )}
 
@@ -451,7 +453,7 @@ const BowlingDashboard = () => {
                 {winnerIndex !== null && isGameOver ? (
                   <div>
                     <p>Winner: {players[winnerIndex].name}</p>
-                    <Confetti width={width} height={height}/>
+                    <Confetti width={width} height={height} />
                   </div>
                 ) : ''}
               </div>

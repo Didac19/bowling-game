@@ -1,8 +1,10 @@
 import './App.css'
 import BowlingDashboard2 from './components/BowlingDashboard2'
 import bowlingBg from './assets/bowling.jpg'
+import audioManager from './utils/audioManager';
 
 function App() {
+  audioManager.preloadSounds();
   return (
     <div className='relative min-h-screen' style={{
       backgroundImage: `url(${bowlingBg})`,
