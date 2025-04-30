@@ -554,6 +554,8 @@ const BowlingDashboard = () => {
     localStorage.setItem('bowlingResetCount', newResetCount.toString());
     setSelectedCell({ playerIndex: 0, frameIndex: 0, rollIndex: 0 });
     setIsGameOver(false);
+    setShowWinnerModal(false);
+    setShowScoreModal(false);
     setCurrentPhrase(motivationalPhrases[0]);
   };
 
@@ -691,7 +693,17 @@ const BowlingDashboard = () => {
                     transform hover:scale-105 transition-transform
                     animate-pulse"
                 >
-                  ¡Juego terminado! {sortedPlayers[0].name} ha ganado con un puntaje de {highestScore}!
+                  Juego terminado. (
+                  {tiedPlayers ? (
+                    "Empate entre " +
+                    tiedPlayers.map(player => player.name).join(", ") +
+                    " con un puntaje de " +
+                    highestScore +
+                    "!"
+                  ) : (
+                    sortedPlayers[0].name + " ha ganado con un puntaje de " + highestScore + "!"
+                  )}
+                  )
                 </motion.div>
               )}
             </AnimatePresence>
