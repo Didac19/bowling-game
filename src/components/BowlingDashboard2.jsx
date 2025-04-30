@@ -32,8 +32,7 @@ const BowlingDashboard = () => {
     return savedPlayers ? JSON.parse(savedPlayers) : [];
   });
   const [showPhrase, setShowPhrase] = useState(false);
-
-
+  const [showWinnerModal, setShowWinnerModal] = useState(false);
 
   const [resetCount, setResetCount] = useState(() => {
     const savedCount = localStorage.getItem('bowlingResetCount');
@@ -48,6 +47,7 @@ const BowlingDashboard = () => {
     setGameStarted(false);
     setSelectedCell({ playerIndex: null, frameIndex: null, rollIndex: null });
     setIsGameOver(false);
+    setShowWinnerModal(false);
     setCurrentPhrase('');
   };
   const [gameStarted, setGameStarted] = useState(() => {
@@ -125,10 +125,13 @@ const BowlingDashboard = () => {
       setShowPhrase(true);
       const timer = setTimeout(() => {
         setShowPhrase(false);
+        if (isGameOver) {
+          setIsGameOver(false);
+        }
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [currentPhrase]);
+  }, [currentPhrase, isGameOver]);
 
   const addPlayer = () => {
     if (newPlayerName.trim()) {
@@ -181,8 +184,10 @@ const BowlingDashboard = () => {
   };
 
   const isCellClickable = (playerIndex, frameIndex, rollIndex) => {
-    if (isGameOver || !gameStarted) return false;
+    // If game is over or not started, no cells are clickable
+    if (isGameOver || !gameStarted || showWinnerModal) return false;
 
+    // Only allow clicking on the currently selected cell
     if (playerIndex !== selectedCell.playerIndex ||
       frameIndex !== selectedCell.frameIndex ||
       rollIndex !== selectedCell.rollIndex) {
@@ -356,7 +361,12 @@ const BowlingDashboard = () => {
       }
 
       if (nextPlayerIndex === 0 && nextFrameIndex === 10) {
+        setShowScoreModal(false);
         setIsGameOver(true);
+        setShowWinnerModal(true);
+        const winner = [...newPlayers].sort((a, b) => b.totalScore - a.totalScore)[0];
+        setCurrentPhrase(`¡${winner.name} es el ganador con ${winner.totalScore} puntos!`);
+        setShowPhrase(true);
       } else {
         const nextCell = { playerIndex: nextPlayerIndex, frameIndex: nextFrameIndex, rollIndex: nextRollIndex };
         setSelectedCell(nextCell);
@@ -387,7 +397,12 @@ const BowlingDashboard = () => {
         })
       );
       if (allCellsFilled) {
+        setShowScoreModal(false);
         setIsGameOver(true);
+        setShowWinnerModal(true);
+        const winner = [...newPlayers].sort((a, b) => b.totalScore - a.totalScore)[0];
+        setCurrentPhrase(`¡${winner.name} es el ganador con ${winner.totalScore} puntos!`);
+        setShowPhrase(true);
       }
 
       // Save the updated game state to localStorage
@@ -521,6 +536,7 @@ const BowlingDashboard = () => {
     setGameStarted(false);
     setSelectedCell({ playerIndex: null, frameIndex: null, rollIndex: null });
     setIsGameOver(false);
+    setShowWinnerModal(false);
     setCurrentPhrase('');
   };
 
@@ -647,7 +663,7 @@ const BowlingDashboard = () => {
                     {currentPhrase}
                   </span>
                 </motion.div>
-              ) : !isGameOver ? (
+              ) : !showWinnerModal ? (
                 <motion.div
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -675,7 +691,7 @@ const BowlingDashboard = () => {
                     transform hover:scale-105 transition-transform
                     animate-pulse"
                 >
-                  ¡Juego terminado!
+                  ¡Juego terminado! {sortedPlayers[0].name} ha ganado con un puntaje de {highestScore}!
                 </motion.div>
               )}
             </AnimatePresence>
