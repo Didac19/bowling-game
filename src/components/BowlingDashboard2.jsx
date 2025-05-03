@@ -694,7 +694,7 @@ const BowlingDashboard = () => {
                     animate-pulse"
                 >
                   Juego terminado. (
-                  {tiedPlayers ? (
+                  {tiedPlayers.length > 1 ? (
                     "Empate entre " +
                     tiedPlayers.map(player => player.name).join(", ") +
                     " con un puntaje de " +
